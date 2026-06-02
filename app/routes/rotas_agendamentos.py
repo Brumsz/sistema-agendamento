@@ -4,10 +4,10 @@ from database.models.agendamentos import *
 from database.models.usuario import *
 from database.db import get_session
 
-routes = APIRouter(prefix='/agendamentos',tags=['Agendamentos'])
+router = APIRouter(prefix='/agendamentos',tags=['Agendamentos'])
 
 #Agendar
-@routes.post('/',response_model=AgendamentosRead)
+@router.post('/agendar',response_model=AgendamentosRead)
 def agendar(dados_agendamento:AgendamentosCreate,session: Session = Depends(get_session)):
     achar_usuario = session.exec(select(Usuarios).where(Usuarios.id_usuario == dados_agendamento.id_usuario)).first()
     if not achar_usuario:
@@ -29,6 +29,35 @@ def agendar(dados_agendamento:AgendamentosCreate,session: Session = Depends(get_
     return criar_agendamento
 
 #Consultar Agenda
+@router.get('/',response_model=list[AgendamentosRead])
+def consultar_agendamentos(session:Session = Depends(get_session)):
+    try:
+        agendamentos = session.exec(select(Agendamentos)).all()
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f'Não foi possivel acessar os agendamentos: {e}'
+        )
+    return agendamentos
 
 #Consultar Agendamento especifico
+@router.get('/{id_agendamentos}',response_model=AgendamentosRead)
+def achar_agendamento(id_agendamentos:int,session: Session = Depends(get_session)):
+    agendamento_achado = session.exec(select(Agendamentos).where(Agendamentos.id_agendamentos == id_agendamentos)).first()
+    if not agendamento_achado:
+        raise HTTPException(
+            status_code= 404, 
+            detail=f"Agendamento com id {id_agendamentos} não encontrado"
+        )
+    try:
+        return agendamento_achado
+    except Exception as e:
+        raise HTTPException(
+            status_code=404,
+            detail= e
+        )
+    
 #Excluir Agendamento
+
+
+#Mudar agendamento
