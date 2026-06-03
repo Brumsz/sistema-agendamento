@@ -58,6 +58,44 @@ def achar_agendamento(id_agendamentos:int,session: Session = Depends(get_session
         )
     
 #Excluir Agendamento
-
+@router.delete('/{id_agendamentos}',response_model=AgendamentosRead)
+def deletar_agendamento(id_agendamentos:int,session: Session = Depends(get_session)):
+    agendamento_achado = session.exec(select(Agendamentos).where(Agendamentos.id_agendamentos == id_agendamentos)).first()
+    if not agendamento_achado:
+        raise HTTPException(
+            status_code= 404, 
+            detail=f"Agendamento com id {id_agendamentos} não encontrado"
+        )
+    
+    try:
+        session.delete(agendamento_achado)
+        session.commit()
+    except Exception as e:
+        raise HTTPException(
+            status_code=404,
+            detail= f'Não foi possivel fazer a exclusão: {e}'
+        )
 
 #Mudar agendamento
+@router.put('/{id_agendamentos}',response_model=AgendamentosRead)
+def atualizar_agendamento(id_agendamentos:int,dados_atualizados_do_agendamento:AgendamentosCreate,session: Session = Depends(get_session)):
+    agendamento_achado = session.exec(select(Agendamentos).where(Agendamentos.id_agendamentos == id_agendamentos)).first()
+    if not agendamento_achado:
+        raise HTTPException(
+            status_code= 404, 
+            detail=f"Agendamento com id {id_agendamentos} não encontrado"
+        )
+    
+    novas_informacoes = dados_atualizados_do_agendamento.model_dump(exclude_unset=True)
+    agendamento_achado.sqlmodel_update(novas_informacoes)
+
+    try:
+        session.add(agendamento_achado)
+        session.commit()
+        session.refresh(agendamento_achado)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f'Não foi possivel atualizar agendamento: {e}'
+        )
+    return agendamento_achado
