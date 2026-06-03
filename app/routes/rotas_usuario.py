@@ -1,7 +1,10 @@
 from fastapi import Request,FastAPI,APIRouter,HTTPException,Depends
 from sqlmodel import Session,select
+from passlib.context import CryptContext
 from database.models.usuario import *
 from database.db import get_session
+
+embaralhador_de_senha = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 router = APIRouter(prefix="/usuarios",tags=["Usuários"])
 
@@ -14,6 +17,7 @@ def cadastrar_usuario(usuario_dados:UsuariosCreate,session: Session=Depends(get_
             status_code= 400, 
             detail="Este e-mail já está cadastrado."
         )
+    usuario_dados.senha = embaralhador_de_senha.hash(usuario_dados.senha)
     novo_usuario = Usuarios(**usuario_dados.model_dump(exclude_unset=True))
     try:
         session.add(novo_usuario)
