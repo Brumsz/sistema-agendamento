@@ -76,11 +76,20 @@ def achar_agendamento(id_agendamentos:int,session: Session = Depends(get_session
             status_code=404,
             detail= e
         )
-    
+
 #Excluir Agendamento
 @router.delete('/{id_agendamentos}')
-def deletar_agendamento(id_agendamentos:int,session: Session = Depends(get_session)):
-    agendamento_achado = session.exec(select(Agendamentos).where(Agendamentos.id_agendamentos == id_agendamentos)).first()
+def deletar_agendamento(id_agendamentos:int,session: Session = Depends(get_session),token:str = Depends(verificador_JWT)):
+    try:
+        token_descriptografado = jwt.decode(token,settings.CHAVE_SECRETA,algorithms=[settings.ALGORITMO])
+    except Exception as e:
+        raise HTTPException(
+            status_code= 401,
+            detail='Token invalido'
+        )
+    id_encontrado = token_descriptografado['id_usuario']
+
+    agendamento_achado = session.exec(select(Agendamentos).where(Agendamentos.id_agendamentos == id_agendamentos).where(Agendamentos.id_usuario == id_encontrado)).first()
     if not agendamento_achado:
         raise HTTPException(
             status_code= 404, 
@@ -98,8 +107,17 @@ def deletar_agendamento(id_agendamentos:int,session: Session = Depends(get_sessi
 
 #Mudar agendamento
 @router.put('/{id_agendamentos}',response_model=AgendamentosRead)
-def atualizar_agendamento(id_agendamentos:int,dados_atualizados_do_agendamento:AgendamentosCreate,session: Session = Depends(get_session)):
-    agendamento_achado = session.exec(select(Agendamentos).where(Agendamentos.id_agendamentos == id_agendamentos)).first()
+def atualizar_agendamento(id_agendamentos:int,dados_atualizados_do_agendamento:AgendamentosCreate,session: Session = Depends(get_session),token:str = Depends(verificador_JWT)):
+    try:
+        token_descriptografado = jwt.decode(token,settings.CHAVE_SECRETA,algorithms=[settings.ALGORITMO])
+    except Exception as e:
+        raise HTTPException(
+            status_code= 401,
+            detail='Token invalido'
+        )
+    id_encontrado = token_descriptografado['id_usuario']
+
+    agendamento_achado = session.exec(select(Agendamentos).where(Agendamentos.id_agendamentos == id_agendamentos).where(Agendamentos.id_usuario == id_encontrado)).first()
     if not agendamento_achado:
         raise HTTPException(
             status_code= 404, 

@@ -127,13 +127,22 @@ def deletar_usuario(session: Session = Depends(get_session), token:str = Depends
         )
 
 #atualizar usuario
-@router.put('/{id_usuario}',response_model=UsuariosRead)
-def atualizar_usuario(id_usuario:int,usuario_dados:UsuariosCreate, session: Session = Depends(get_session)):
-    usuario_achado = session.exec(select(Usuarios).where(Usuarios.id_usuario == id_usuario)).first()
+@router.put('/',response_model=UsuariosRead)
+def atualizar_usuario(usuario_dados:UsuariosCreate, session: Session = Depends(get_session),token:str = Depends(verificador_JWT)):
+    try:
+        token_descriptografado = jwt.decode(token,settings.CHAVE_SECRETA,algorithms=[settings.ALGORITMO])
+    except Exception as e:
+        raise HTTPException(
+            status_code= 401,
+            detail='Token invalido'
+        )
+    id_encontrado = token_descriptografado['id_usuario']
+
+    usuario_achado = session.exec(select(Usuarios).where(Usuarios.id_usuario == id_encontrado)).first()
     if not usuario_achado:
         raise HTTPException(
             status_code= 404, 
-            detail=f"Usuario com id {id_usuario} não encontrado."
+            detail=f"Usuario com id {id_encontrado} não encontrado."
         )
     
     novas_informacoes = usuario_dados.model_dump(exclude_unset=True)
