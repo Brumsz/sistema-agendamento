@@ -1,14 +1,27 @@
 from fastapi import APIRouter,Depends,HTTPException
 from sqlmodel import Session,select
+from fastapi.security import OAuth2PasswordBearer
+import jwt
+from config import settings
 from database.models.agendamentos import *
 from database.models.usuario import *
 from database.db import get_session
 
+
+verificador_JWT = OAuth2PasswordBearer('/usuarios/login')
 router = APIRouter(prefix='/agendamentos',tags=['Agendamentos'])
 
 #Agendar
 @router.post('/agendar',response_model=AgendamentosRead)
-def agendar(dados_agendamento:AgendamentosCreate,session: Session = Depends(get_session)):
+def agendar(dados_agendamento:AgendamentosCreate,session: Session = Depends(get_session),token:str = Depends(verificador_JWT)):
+    try:
+        token_descriptografado = jwt.decode(token,settings.CHAVE_SECRETA,algorithms=[settings.ALGORITMO])
+    except Exception as e:
+        raise HTTPException(
+            status_code=401,
+            detail='Token invalido!'
+        )
+    dados_agendamento.id_usuario = token_descriptografado['id_usuario']
     achar_usuario = session.exec(select(Usuarios).where(Usuarios.id_usuario == dados_agendamento.id_usuario)).first()
     if not achar_usuario:
         raise HTTPException(

@@ -12,11 +12,10 @@ def criar_tabelas():
     SQLModel.metadata.create_all(engine)
     print('tabelas criadas')
 
+#essa função abre uma sessão no banco de dados, e sera usado em outras partes do codigo para acessar o banco de dados
 def get_session():
     with Session(engine) as session:
         yield session
 
-if __name__ == '__main__':
-    criar_tabelas()
 
 

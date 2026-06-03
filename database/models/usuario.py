@@ -14,3 +14,6 @@ class Usuarios(UsuariosBase,table=True):
 class UsuariosRead(UsuariosBase):
     id_usuario:int
 
+class UsuariosLogin(SQLModel):
+    email:str
+    senha:str
