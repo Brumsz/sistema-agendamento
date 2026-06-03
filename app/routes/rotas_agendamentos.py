@@ -16,6 +16,13 @@ def agendar(dados_agendamento:AgendamentosCreate,session: Session = Depends(get_
             detail=f'Usuario com id {dados_agendamento.id_usuario} não encontrado.'
         )
     
+    horario_ocupado = session.exec(select(Agendamentos).where(Agendamentos.data== dados_agendamento.data).where(Agendamentos.hora == dados_agendamento.hora)).first()
+    if horario_ocupado:
+        raise HTTPException(
+            status_code=400,
+            detail='Desculpe, este horário já está reservado por outro usuário.'
+        )
+
     criar_agendamento = Agendamentos(**dados_agendamento.model_dump())
     try:
         session.add(criar_agendamento)
@@ -58,7 +65,7 @@ def achar_agendamento(id_agendamentos:int,session: Session = Depends(get_session
         )
     
 #Excluir Agendamento
-@router.delete('/{id_agendamentos}',response_model=AgendamentosRead)
+@router.delete('/{id_agendamentos}')
 def deletar_agendamento(id_agendamentos:int,session: Session = Depends(get_session)):
     agendamento_achado = session.exec(select(Agendamentos).where(Agendamentos.id_agendamentos == id_agendamentos)).first()
     if not agendamento_achado:
